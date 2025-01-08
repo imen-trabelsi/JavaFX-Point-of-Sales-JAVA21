@@ -3,11 +3,15 @@ package com.rafsan.inventory.model;
 import com.rafsan.inventory.HibernateUtil;
 import com.rafsan.inventory.dao.SaleDao;
 import com.rafsan.inventory.entity.Sale;
-import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
+
+import java.util.List;
 
 public class SalesModel implements SaleDao {
 
@@ -15,31 +19,34 @@ public class SalesModel implements SaleDao {
 
     @Override
     public ObservableList<Sale> getSales() {
-
         ObservableList<Sale> list = FXCollections.observableArrayList();
 
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        List<Sale> products = session.createQuery("from Sale").list();
-        session.beginTransaction().commit();
-        products.stream().forEach(list::add);
+        List<Sale> sales = session.createQuery("from Sale", Sale.class).getResultList();
+        session.getTransaction().commit();
+        list.addAll(sales);
 
         return list;
     }
 
     @Override
     public ObservableList<Sale> getSaleByProductId(long id) {
-
         ObservableList<Sale> list = FXCollections.observableArrayList();
 
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
 
-        List<Sale> products = (List<Sale>) session.createCriteria(Sale.class)
-                .add(Restrictions.eq("product.id", id)).list();
+        // Use JPA Criteria API to filter by product ID
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<Sale> query = builder.createQuery(Sale.class);
+        Root<Sale> root = query.from(Sale.class);
+        Predicate predicate = builder.equal(root.get("product").get("id"), id);
+        query.select(root).where(predicate);
 
-        session.beginTransaction().commit();
-        products.stream().forEach(list::add);
+        List<Sale> sales = session.createQuery(query).getResultList();
+        session.getTransaction().commit();
+        list.addAll(sales);
 
         return list;
     }
@@ -56,10 +63,9 @@ public class SalesModel implements SaleDao {
 
     @Override
     public void saveSale(Sale sale) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        session.save(sale);
+        session.persist(sale);
         session.getTransaction().commit();
     }
 
@@ -68,11 +74,13 @@ public class SalesModel implements SaleDao {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Sale s = session.get(Sale.class, sale.getId());
-        s.setProduct(sale.getProduct());
-        s.setQuantity(sale.getQuantity());
-        s.setPrice(sale.getPrice());
-        s.setTotal(sale.getTotal());
-        s.setDate(sale.getDate());
+        if (s != null) {
+            s.setProduct(sale.getProduct());
+            s.setQuantity(sale.getQuantity());
+            s.setPrice(sale.getPrice());
+            s.setTotal(sale.getTotal());
+            s.setDate(sale.getDate());
+        }
         session.getTransaction().commit();
     }
 
@@ -81,8 +89,9 @@ public class SalesModel implements SaleDao {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Sale s = session.get(Sale.class, sale.getId());
-        session.delete(s);
+        if (s != null) {
+            session.remove(s);
+        }
         session.getTransaction().commit();
     }
-
 }

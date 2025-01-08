@@ -12,17 +12,29 @@ public class PurchaseModel implements PurchaseDao {
 
     private static Session session;
     
-    @Override
     public ObservableList<Purchase> getPurchases() {
-        
         ObservableList<Purchase> list = FXCollections.observableArrayList();
-
+    
         session = HibernateUtil.getSessionFactory().getCurrentSession();
-        session.beginTransaction();
-        List<Purchase> products = session.createQuery("from Purchase").list();
-        session.beginTransaction().commit();
-        products.stream().forEach(list::add);
-
+        
+        // Ensure no active transaction before starting a new one
+        if (!session.getTransaction().isActive()) {
+            session.beginTransaction();
+        }
+    
+        try {
+            List<Purchase> purchases = session.createQuery("from Purchase").list();
+            purchases.forEach(list::add);
+            session.getTransaction().commit(); // Commit the transaction
+        } catch (Exception e) {
+            session.getTransaction().rollback(); // Rollback in case of error
+            throw e; // Re-throw the exception to handle it elsewhere
+        } finally {
+            if (session != null && session.isOpen()) {
+                session.close(); // Always close the session to prevent leaks
+            }
+        }
+    
         return list;
     }
 

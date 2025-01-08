@@ -1,9 +1,31 @@
-# JavaFX-Point-of-Sales
-Point of Sales with inventory management system 
 
+# JavaFX-Point-of-Sales-JAVA21
+This project is based on [OriginalProject](https://github.com/original-owner/original-repo), created by Rafsanjani. 
+
+## What’s New
+- Updated to support Java 21.
+- Fixed deprecated APIs and compatibility issues.
+
+## How to Start the Project
+- Make sure you have [Java 21](https://www.oracle.com/java/technologies/javase-downloads.html)
+- Install [Maven](https://maven.apache.org/) 
+- Install [MySQL](https://www.mysql.com/)
+- Start MySQL server
+- Log in to MySQL: mysql -u root -p
+- create inventory database: CREATE DATABASE inventory;
+- Use the inventory Database: USE inventory;
+- Navigate to your project directory in the terminal
+- Run the following command to import the database file: mysql -u root -p inventory < inventory.sql
+- Verify the Import: Log in to MySQL and check the tables: SHOW TABLES;
+- setup you password in hibernate.cfg.xml
+- Run your application: mvn javafx:run
+
+
+## Licence
 The MIT License (MIT)
 
 Copyright (c) 2024 Rafsanjani
+Copyright (c) 2025 Imen Trabelsi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

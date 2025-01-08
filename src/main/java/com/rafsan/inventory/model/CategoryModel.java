@@ -6,9 +6,10 @@ import com.rafsan.inventory.entity.Category;
 import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.hibernate.Criteria;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Session;
-import org.hibernate.criterion.Projections;
 
 public class CategoryModel implements CategoryDao {
 
@@ -16,21 +17,19 @@ public class CategoryModel implements CategoryDao {
 
     @Override
     public ObservableList<Category> getCategories() {
-
         ObservableList<Category> list = FXCollections.observableArrayList();
 
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        List<Category> categories = session.createQuery("from Category").list();
-        session.beginTransaction().commit();
-        categories.stream().forEach(list::add);
+        List<Category> categories = session.createQuery("from Category", Category.class).getResultList();
+        session.getTransaction().commit();
+        list.addAll(categories);
 
         return list;
     }
 
     @Override
     public Category getCategory(long id) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Category category = session.get(Category.class, id);
@@ -41,16 +40,14 @@ public class CategoryModel implements CategoryDao {
 
     @Override
     public void saveCategory(Category category) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        session.save(category);
+        session.persist(category);
         session.getTransaction().commit();
     }
 
     @Override
     public void updateCategory(Category category) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Category c = session.get(Category.class, category.getId());
@@ -64,21 +61,24 @@ public class CategoryModel implements CategoryDao {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Category c = session.get(Category.class, category.getId());
-        session.delete(c);
+        session.remove(c);
         session.getTransaction().commit();
     }
 
     @Override
     public ObservableList<String> getTypes() {
-        
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        Criteria criteria = session.createCriteria(Category.class);
-        criteria.setProjection(Projections.property("type"));
-        ObservableList<String> list = FXCollections.observableArrayList(criteria.list());
-        session.getTransaction().commit();
-        
-        return list;
-    }
 
+        // Use JPA Criteria API to retrieve types
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<String> query = builder.createQuery(String.class);
+        Root<Category> root = query.from(Category.class);
+        query.select(root.get("type"));
+
+        List<String> types = session.createQuery(query).getResultList();
+        session.getTransaction().commit();
+
+        return FXCollections.observableArrayList(types);
+    }
 }

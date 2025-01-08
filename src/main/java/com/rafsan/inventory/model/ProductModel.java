@@ -3,14 +3,15 @@ package com.rafsan.inventory.model;
 import com.rafsan.inventory.HibernateUtil;
 import com.rafsan.inventory.dao.ProductDao;
 import com.rafsan.inventory.entity.Product;
-import com.rafsan.inventory.entity.Supplier;
-import java.util.List;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.hibernate.Criteria;
-import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.criterion.Projections;
+import org.hibernate.query.Query;
+
+import java.util.List;
 
 public class ProductModel implements ProductDao {
 
@@ -18,20 +19,18 @@ public class ProductModel implements ProductDao {
 
     @Override
     public ObservableList<Product> getProducts() {
-
         ObservableList<Product> list = FXCollections.observableArrayList();
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        List<Product> products = session.createQuery("from Product").list();
-        session.beginTransaction().commit();
-        products.stream().forEach(list::add);
+        List<Product> products = session.createQuery("from Product", Product.class).getResultList();
+        session.getTransaction().commit();
+        list.addAll(products);
 
         return list;
     }
 
     @Override
     public Product getProduct(long id) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Product product = session.get(Product.class, id);
@@ -42,13 +41,13 @@ public class ProductModel implements ProductDao {
 
     @Override
     public Product getProductByName(String productName) {
-
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        Query query = session.createQuery("from Product where productName=:name");
+        Query<Product> query = session.createQuery("from Product where productName = :name", Product.class);
         query.setParameter("name", productName);
-        Product product = (Product) query.uniqueResult();
-        
+        Product product = query.uniqueResult();
+        session.getTransaction().commit();
+
         return product;
     }
 
@@ -56,41 +55,44 @@ public class ProductModel implements ProductDao {
     public void saveProduct(Product product) {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        session.save(product);
+        session.persist(product);
         session.getTransaction().commit();
     }
 
     @Override
     public void updateProduct(Product product) {
+        session = HibernateUtil.getSessionFactory().getCurrentSession();
+        session.beginTransaction();
+        Product p = session.get(Product.class, product.getId());
+        if (p != null) {
+            p.setProductName(product.getProductName());
+            p.setCategory(product.getCategory());
+            p.setQuantity(product.getQuantity());
+            p.setPrice(product.getPrice());
+            p.setDescription(product.getDescription());
+        }
+        session.getTransaction().commit();
+    }
 
+    @Override
+    public void increaseProduct(Product product) {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Product p = session.get(Product.class, product.getId());
-        p.setProductName(product.getProductName());
-        p.setCategory(product.getCategory());
-        p.setQuantity(product.getQuantity());
-        p.setPrice(product.getPrice());
-        p.setDescription(product.getDescription());
+        if (p != null) {
+            p.setQuantity(product.getQuantity());
+        }
         session.getTransaction().commit();
     }
-    
+
     @Override
-    public void increaseProduct(Product product){
-    
+    public void decreaseProduct(Product product) {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Product p = session.get(Product.class, product.getId());
-        p.setQuantity(product.getQuantity());
-        session.getTransaction().commit();
-    }
-    
-    @Override
-    public void decreaseProduct(Product product){
-    
-        session = HibernateUtil.getSessionFactory().getCurrentSession();
-        session.beginTransaction();
-        Product p = session.get(Product.class, product.getId());
-        p.setQuantity(product.getQuantity());
+        if (p != null) {
+            p.setQuantity(product.getQuantity());
+        }
         session.getTransaction().commit();
     }
 
@@ -99,20 +101,26 @@ public class ProductModel implements ProductDao {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
         Product p = session.get(Product.class, product.getId());
-        session.delete(p);
+        if (p != null) {
+            session.remove(p);
+        }
         session.getTransaction().commit();
     }
-    
+
     @Override
-    public ObservableList<String> getProductNames(){
-    
+    public ObservableList<String> getProductNames() {
         session = HibernateUtil.getSessionFactory().getCurrentSession();
         session.beginTransaction();
-        Criteria criteria = session.createCriteria(Product.class);
-        criteria.setProjection(Projections.property("productName"));
-        ObservableList<String> list = FXCollections.observableArrayList(criteria.list());
+
+        // Use JPA Criteria API to retrieve product names
+        CriteriaBuilder builder = session.getCriteriaBuilder();
+        CriteriaQuery<String> query = builder.createQuery(String.class);
+        Root<Product> root = query.from(Product.class);
+        query.select(root.get("productName"));
+
+        List<String> productNames = session.createQuery(query).getResultList();
         session.getTransaction().commit();
-        
-        return list;
+
+        return FXCollections.observableArrayList(productNames);
     }
 }
