@@ -5,20 +5,57 @@ This project is based on [OriginalProject](https://github.com/original-owner/ori
 ## What’s New
 - Updated to support Java 21.
 - Fixed deprecated APIs and compatibility issues.
-
 ## How to Start the Project
-- Make sure you have [Java 21](https://www.oracle.com/java/technologies/javase-downloads.html)
-- Install [Maven](https://maven.apache.org/) 
-- Install [MySQL](https://www.mysql.com/)
-- Start MySQL server
-- Log in to MySQL: mysql -u root -p
-- create inventory database: CREATE DATABASE inventory;
-- Use the inventory Database: USE inventory;
-- Navigate to your project directory in the terminal
-- Run the following command to import the database file: mysql -u root -p inventory < inventory.sql
-- Verify the Import: Log in to MySQL and check the tables: SHOW TABLES;
-- setup you password in hibernate.cfg.xml
-- Run your application: mvn javafx:run
+
+### Prerequisites
+1. **Install Java 21**
+   - Download and install [Java 21](https://www.oracle.com/java/technologies/javase-downloads.html).
+   - Ensure `JAVA_HOME` is set correctly.
+
+2. **Install Maven**
+   - Download and install [Maven](https://maven.apache.org/).
+
+3. **Install MySQL**
+   - Download and install [MySQL](https://www.mysql.com/).
+   - Start the MySQL server.
+
+---
+
+### Steps to Set Up and Start the Project
+
+1. **Set Up the MySQL Database**
+   - Log in to MySQL:
+     ```bash
+     mysql -u root -p
+     ```
+   - Create the `inventory` database:
+     ```sql
+     CREATE DATABASE inventory;
+     ```
+   - Use the `inventory` database:
+     ```sql
+     USE inventory;
+     ```
+
+2. **Import the Database**
+   - Navigate to your project directory in the terminal.
+   - Run the following command to import the database file:
+     ```bash
+     mysql -u root -p inventory < inventory.sql
+     ```
+   - Verify the import:
+     ```sql
+     SHOW TABLES;
+     ```
+
+3. **Configure Hibernate**
+   - Open `hibernate.cfg.xml` and set your MySQL username and password.
+
+4. **Run the Application**
+   - Use Maven to start the project:
+     ```bash
+     mvn javafx:run
+     ```
 
 
 ## Licence
